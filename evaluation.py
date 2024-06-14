@@ -1,6 +1,5 @@
 import boto3
 import os
-import pandas as pd
 import requests
 from dotenv import load_dotenv
 
@@ -87,6 +86,7 @@ def evaluate_interview(competences: list[str], responses: list[str]):
     return result
 
 def generate_score(eval_array):
+    print(eval_array)
     total_score = 0
     # print(eval_array)
 
