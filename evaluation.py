@@ -2,6 +2,7 @@ import boto3
 import os
 import requests
 from dotenv import load_dotenv
+from openai import OpenAI
 
 load_dotenv()
 
@@ -47,8 +48,28 @@ def huggingface_query(url, headers, payload):
 
 tags = scan_table_keys_only()
 
-def evaluate_interview(competences: list[str], responses: list[str]):
+def extract_competences_and_responses(competences: list[str], transcripts: list[dict]):
+    responses = []
+
+    for i in range(len(competences)):
+        transcript = transcripts[i]
+
+        response = ""
+        for idx, chat in enumerate(transcript):
+            # print(chat)
+            response += chat["answer"]
+
+            if idx < len(transcript) - 1:
+                response += "\n"
+        
+        responses.append(response)
+    
+    return competences, responses
+
+def evaluate_interview(competences: list[str], transcript: list):
     model_inputs = []
+    responses = extract_competences_and_responses(competences, transcript["behavioral"])
+
     for i in range(len(competences)):
         competence = competences[i]
         response = responses[i]
@@ -82,13 +103,36 @@ def evaluate_interview(competences: list[str], responses: list[str]):
 
     result = huggingface_query(HUGGINGFACE_API_URL, headers, { "inputs": model_inputs })
 
-    # print(result)
-    return result
+    final_score = 0
+    behavioral_scores = generate_behavioral_score(result)
+    technical_scores = generate_technical_score(competences, transcript["technical"])
 
-def generate_score(eval_array):
-    print(eval_array)
+    final_score = aggregate_scores(behavioral_scores, technical_scores)
+
+    return final_score
+
+def aggregate_scores(b: list[int], t: list[int]):
     total_score = 0
+
+    for i in range(len(b)):
+        score = 0
+        if t[i] != -1:
+            score = (b[i] + t[i]) / 2
+
+        else:
+            score = b[i]
+
+        total_score += score
+
+    
+    return (total_score / len(b)) * 100
+
+
+def generate_behavioral_score(eval_array):
+    print(eval_array)
+    # total_score = 0
     # print(eval_array)
+    scores = []
 
     for eval in eval_array:
         fail_score = 0
@@ -105,9 +149,128 @@ def generate_score(eval_array):
             success_score = eval[1]["score"]
 
         if fail_score < success_score:
-            total_score += 1
+            scores.append(1)
+        else:
+            scores.append(0)
     
-    return (total_score / len(eval_array)) * 100.0
+    return scores
+
+client = OpenAI()
+
+def generate_model_parameters(skill: str, transcript: str):
+    model_parameters = {
+  "model":"gpt-4-0125-preview",
+  "messages":[
+    {"role": "system", "content": f"""
+You are tasked with evaluating a transcript of an IT job interview. The interview that is conducted in the transcript is technical. 
+You need sufficient IT knowledge since you will evaluate the answer of the interviewee to determine whether the interviewee answer correctly or not.
+You will output "SUCCESS" if the interviewee's answer is deemd correct and "FAIL" if it's deemed false.
+Below are 5 examples of correct answers.
+     
+Here are 5 examples:
+EXAMPLE 1:
+SKILL TO BE EVALUATED: Python
+
+INTERVIEWER:
+What is the use of zip () in python?
+
+INTERVIEWEE:
+The zip returns an iterator and takes iterable as argument. These iterables can be list, tuple, dictionary etc. It maps similar index of every iterable to make a single entity.
+    
+OUTPUT: SUCCESS
+
+EXAMPLE 2:
+SKILL TO BE EVALUATED: Python
+
+INTERVIEWER:
+What will be the output of the following?
+name=["swati","shweta"]
+age=[10,20]
+new_entity-zip(name,age)
+new_entity-set(new_entity)
+print(new_entity)
+
+INTERVIEWEE:
+The output is {{('shweta', 20), ('swati', 10)}}
+
+OUTPUT: SUCCESS
+
+EXAMPLE 3:
+SKILL TO BE EVALUATED: Python
+
+INTERVIEWER:
+What will be the output of the following?
+a=["1","2","3"]
+b=["a","b","c"]
+c=[x+y for x, y in zip(a,b)] print(c)
+
+INTERVIEWEE:
+The output is: ['1a', '2b', '3c']
+
+OUTPUT: SUCCESS
+
+EXAMPLE 4:
+SKILL TO BE EVALUATED: Python
+
+INTERVIEWER:
+What will be the output of the following?
+str="apple#banana#kiwi#orange"
+print(str.split("#",2))
+
+INTERVIEWEE:
+['apple', 'banana', 'kiwi#orange']
+
+OUTPUT: SUCCESS
+
+EXAMPLE 5:
+SKILL TO BE EVALUATED: Python
+
+INTERVIEWER:
+What are python modules? Name some commonly used built-in modules in Python?
+
+INTERVIEWEE:
+Python modules are files containing Python code. This code can either be function classes or variables. A Python module is a .py file containing executable code. Some of thecommonly used built-in modules are:
+- Os
+- sys
+- math
+- random
+- data time
+- json
+
+OUTPUT: SUCCESS
+
+Note that the examples that I give above have the correct answer. Your job is to generate the output only (SUCCESS OR FAIL). You don't need to explain your justification.
+SKILL TO BE EVALUATED: {skill}
+{transcript}
+
+"""},
+  ]
+}
+    
+    return model_parameters
+
+def generate_technical_score(skills: str, transcript: str):
+    # total_score = 0
+    scores = []
+    for idx, skill in enumerate(skills):
+        
+        chat = transcript[idx]
+        if len(chat) > 0:
+            transcript_text = f"INTERVIEWEE:\n{chat['question']}\n\nINTERVIEWER:\n{chat['answer']}"
+
+            model_parameters = generate_model_parameters(skill, transcript_text)
+            completion = client.chat.completions.create(
+                **model_parameters
+            )
+
+            generated = completion.choices[0].message.content
+            score = 1 if "SUCCESS" in generated else 0
+            # total_score += score
+            scores.append(score)
+        else:
+            scores.append(-1)
+
+    return scores
 
 # evaluate_interview(
 #     ["Experience of working in a Linux environment"],

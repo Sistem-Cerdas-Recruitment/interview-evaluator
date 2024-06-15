@@ -3,9 +3,33 @@ import os
 import requests
 from kafka import KafkaConsumer
 from dotenv import load_dotenv
-from evaluation import evaluate_interview, generate_score
+from evaluation import evaluate_interview
 
 load_dotenv()
+
+
+def extract_technical(competences: list[str], transcripts: list[dict]):
+    new_transcripts = {
+        "behavioral": [],
+        "technical": [],
+    }
+    # print(competences)
+
+    for i in range(len(competences)):
+        # new_transcripts[i]= { "competence": competences[i] }
+
+
+        transcript = transcripts[i]
+        # print(transcript)
+
+        if transcript[-1]["question"].startswith("TECHNICAL:"):
+            new_transcripts["behavioral"].append(transcript[:-1])
+            new_transcripts["technical"].append(transcript[-1])
+        else:
+            new_transcripts["behavioral"].append(transcript)
+            new_transcripts["technical"].append([])
+    
+    return new_transcripts
 
 def extract_competences_and_responses(competences: list[str], transcripts: list[dict]):
     responses = []
@@ -61,10 +85,12 @@ def consume_messages():
             incoming_message = json.loads(message.value.decode("utf-8"))
             # print(incoming_message)
 
-            competences, responses = extract_competences_and_responses(incoming_message["competence"], incoming_message["transcript"])
-            result = evaluate_interview(competences, responses)
+            transcript = extract_technical(incoming_message["competence"], incoming_message["transcript"])
+            # print(transcript)
+            # competences, responses = extract_competences_and_responses(incoming_message["competence"], transcript["behavioral"])
 
-            interview_score = generate_score(result)
+            interview_score = evaluate_interview(incoming_message["competence"], transcript)
+            print(interview_score)
 
             send_results_back(interview_score, incoming_message["job_application_id"])
             # print(score)
