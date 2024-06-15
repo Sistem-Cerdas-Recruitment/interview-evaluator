@@ -85,11 +85,11 @@ def consume_messages():
             incoming_message = json.loads(message.value.decode("utf-8"))
             # print(incoming_message)
 
-            transcript = extract_technical(incoming_message["competence"], incoming_message["transcript"])
+            transcript = extract_technical(incoming_message["competences"], incoming_message["transcript"])
             # print(transcript)
-            # competences, responses = extract_competences_and_responses(incoming_message["competence"], transcript["behavioral"])
+            # competences, responses = extract_competences_and_responses(incoming_message["competences"], transcript["behavioral"])
 
-            interview_score = evaluate_interview(incoming_message["competence"], transcript)
+            interview_score = evaluate_interview(incoming_message["competences"], transcript)
             print(interview_score)
 
             send_results_back(interview_score, incoming_message["job_application_id"])
