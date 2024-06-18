@@ -106,7 +106,7 @@ def evaluate_interview(competences: list[str], transcript: list):
 
     # Handling cold start
     if "error" in result:
-        if result["error"] == "Model davidkarelhp/job_interview_STAR_transcript_classifier_long is currently loading":
+        if result["error"] == os.environ["COLD_START_ERROR"]:
             print("Cold start. Waiting 30 seconds.")
             time.sleep(30)
             result = huggingface_query(HUGGINGFACE_API_URL, headers, { "inputs": model_inputs })
