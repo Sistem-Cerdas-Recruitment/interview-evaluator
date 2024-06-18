@@ -1,6 +1,7 @@
 import boto3
 import os
 import requests
+import time
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -102,6 +103,13 @@ def evaluate_interview(competences: list[str], transcript: list):
     headers = {"Authorization": f"Bearer {os.environ['HUGGINGFACE_TOKEN']}"}
 
     result = huggingface_query(HUGGINGFACE_API_URL, headers, { "inputs": model_inputs })
+
+    # Handling cold start
+    if "error" in result:
+        if result["error"] == "Model davidkarelhp/job_interview_STAR_transcript_classifier_long is currently loading":
+            print("Cold start. Waiting 30 seconds.")
+            time.sleep(30)
+            result = huggingface_query(HUGGINGFACE_API_URL, headers, { "inputs": model_inputs })
 
     final_score = 0
     behavioral_scores = generate_behavioral_score(result)
