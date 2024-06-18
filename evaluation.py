@@ -2,10 +2,14 @@ import boto3
 import os
 import requests
 import time
+import logging
 from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(os.environ["TABLE_NAME"])
@@ -57,7 +61,7 @@ def extract_competences_and_responses(competences: list[str], transcripts: list[
 
         response = ""
         for idx, chat in enumerate(transcript):
-            # print(chat)
+            # logger.info(chat)
             response += chat["answer"]
 
             if idx < len(transcript) - 1:
@@ -107,7 +111,7 @@ def evaluate_interview(competences: list[str], transcript: list):
     # Handling cold start
     if "error" in result:
         if result["error"] == os.environ["COLD_START_ERROR"]:
-            print("Cold start. Waiting 30 seconds.")
+            logger.info("Cold start. Waiting 30 seconds.")
             time.sleep(30)
             result = huggingface_query(HUGGINGFACE_API_URL, headers, { "inputs": model_inputs })
 
@@ -137,9 +141,9 @@ def aggregate_scores(b: list[int], t: list[int]):
 
 
 def generate_behavioral_score(eval_array):
-    print(eval_array)
+    logger.info(eval_array)
     # total_score = 0
-    # print(eval_array)
+    # logger.info(eval_array)
     scores = []
 
     for eval in eval_array:
@@ -196,7 +200,7 @@ name=["swati","shweta"]
 age=[10,20]
 new_entity-zip(name,age)
 new_entity-set(new_entity)
-print(new_entity)
+logger.info(new_entity)
 
 INTERVIEWEE:
 The output is {{('shweta', 20), ('swati', 10)}}
@@ -210,7 +214,7 @@ INTERVIEWER:
 What will be the output of the following?
 a=["1","2","3"]
 b=["a","b","c"]
-c=[x+y for x, y in zip(a,b)] print(c)
+c=[x+y for x, y in zip(a,b)] logger.info(c)
 
 INTERVIEWEE:
 The output is: ['1a', '2b', '3c']
@@ -223,7 +227,7 @@ SKILL TO BE EVALUATED: Python
 INTERVIEWER:
 What will be the output of the following?
 str="apple#banana#kiwi#orange"
-print(str.split("#",2))
+logger.info(str.split("#",2))
 
 INTERVIEWEE:
 ['apple', 'banana', 'kiwi#orange']
