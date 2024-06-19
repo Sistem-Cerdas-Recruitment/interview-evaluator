@@ -1,3 +1,3 @@
 # interview-evaluator
 
-Deployed with Dcoker containerization with AWS Fargate.
+Deployed with Docker containerization with AWS Fargate.
