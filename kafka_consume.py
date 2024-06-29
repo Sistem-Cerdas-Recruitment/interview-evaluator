@@ -86,7 +86,7 @@ def consume_messages():
         try:
             logger.info("A message is being processed")
             incoming_message = json.loads(message.value.decode("utf-8"))
-            # logger.info(incoming_message)
+            logger.info(incoming_message)
 
             transcript = extract_technical(incoming_message["competences"], incoming_message["transcript"])
             # logger.info(transcript)
