@@ -200,7 +200,7 @@ name=["swati","shweta"]
 age=[10,20]
 new_entity-zip(name,age)
 new_entity-set(new_entity)
-logger.info(new_entity)
+print(new_entity)
 
 INTERVIEWEE:
 The output is {{('shweta', 20), ('swati', 10)}}
@@ -214,7 +214,7 @@ INTERVIEWER:
 What will be the output of the following?
 a=["1","2","3"]
 b=["a","b","c"]
-c=[x+y for x, y in zip(a,b)] logger.info(c)
+c=[x+y for x, y in zip(a,b)] print(c)
 
 INTERVIEWEE:
 The output is: ['1a', '2b', '3c']
@@ -227,7 +227,7 @@ SKILL TO BE EVALUATED: Python
 INTERVIEWER:
 What will be the output of the following?
 str="apple#banana#kiwi#orange"
-logger.info(str.split("#",2))
+print(str.split("#",2))
 
 INTERVIEWEE:
 ['apple', 'banana', 'kiwi#orange']
