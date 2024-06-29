@@ -5,6 +5,7 @@ import time
 import logging
 from dotenv import load_dotenv
 from openai import OpenAI
+from pprint import pprint
 
 load_dotenv()
 
@@ -69,11 +70,16 @@ def extract_competences_and_responses(competences: list[str], transcripts: list[
         
         responses.append(response)
     
-    return competences, responses
+    return responses
 
 def evaluate_interview(competences: list[str], transcript: list):
     model_inputs = []
     responses = extract_competences_and_responses(competences, transcript["behavioral"])
+
+    print(len(competences))
+    print(len(responses))
+
+    # pprint(transcript)
 
     for i in range(len(competences)):
         competence = competences[i]
@@ -102,6 +108,8 @@ def evaluate_interview(competences: list[str], transcript: list):
         text += f"RESPONSE:\n{response}"
 
         model_inputs.append(text)
+        # print(text)
+        print("------")
 
     HUGGINGFACE_API_URL = os.environ["HUGGINGFACE_API_URL"]
     headers = {"Authorization": f"Bearer {os.environ['HUGGINGFACE_TOKEN']}"}
@@ -141,7 +149,7 @@ def aggregate_scores(b: list[int], t: list[int]):
 
 
 def generate_behavioral_score(eval_array):
-    logger.info(eval_array)
+    logger.info("EVAL ARRAY", eval_array)
     # total_score = 0
     # logger.info(eval_array)
     scores = []
@@ -268,7 +276,9 @@ def generate_technical_score(skills: str, transcript: str):
         
         chat = transcript[idx]
         if len(chat) > 0:
-            transcript_text = f"INTERVIEWEE:\n{chat['question']}\n\nINTERVIEWER:\n{chat['answer']}"
+            # print(chat)
+            transcript_text = f"INTERVIEWEE:\n{chat[0]['question'].lstrip('TECHNICAL: ')}\n\nINTERVIEWER:\n{chat[0]['answer']}"
+            # print(transcript_text)
 
             model_parameters = generate_model_parameters(skill, transcript_text)
             completion = client.chat.completions.create(

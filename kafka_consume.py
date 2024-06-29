@@ -5,6 +5,7 @@ import logging
 from kafka import KafkaConsumer
 from dotenv import load_dotenv
 from evaluation import evaluate_interview
+from pprint import pprint
 
 load_dotenv()
 
@@ -27,7 +28,7 @@ def extract_technical(competences: list[str], transcripts: list[dict]):
 
         if transcript[-1]["question"].startswith("TECHNICAL:"):
             new_transcripts["behavioral"].append(transcript[:-1])
-            new_transcripts["technical"].append(transcript[-1])
+            new_transcripts["technical"].append([transcript[-1]])
         else:
             new_transcripts["behavioral"].append(transcript)
             new_transcripts["technical"].append([])
@@ -86,16 +87,26 @@ def consume_messages():
         try:
             logger.info("A message is being processed")
             incoming_message = json.loads(message.value.decode("utf-8"))
-            logger.info(incoming_message)
+            incoming_message = json.loads(incoming_message)
+            # logger.info(incoming_message)
+            # logger.info("Incoming: ", incoming_message["data"])
+            # pprint(incoming_message)
+
 
             transcript = extract_technical(incoming_message["competences"], incoming_message["transcript"])
+
+            # print(len(incoming_message["competences"]))
+            # print(len(transcript["behavioral"]))
+            # print(len(transcript["technical"]))
+
             # logger.info(transcript)
             # competences, responses = extract_competences_and_responses(incoming_message["competences"], transcript["behavioral"])
 
             interview_score = evaluate_interview(incoming_message["competences"], transcript)
-            logger.info(interview_score)
+            logger.info("INTERVIEW SCORE:", interview_score)
 
-            send_results_back(interview_score, incoming_message["job_application_id"])
+            # send_results_back(interview_score, incoming_message["job_application_id"])
+            send_results_back(interview_score, incoming_message["jobApplicationId"])
             # logger.info(score)
 
 
