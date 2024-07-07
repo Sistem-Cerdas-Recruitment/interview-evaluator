@@ -184,7 +184,7 @@ def generate_model_parameters(skill: str, transcript: str):
     {"role": "system", "content": f"""
 You are tasked with evaluating a transcript of an IT job interview. The interview that is conducted in the transcript is technical. 
 You need sufficient IT knowledge since you will evaluate the answer of the interviewee to determine whether the interviewee answer correctly or not.
-You will output "SUCCESS" if the interviewee's answer is deemd correct and "FAIL" if it's deemed false.
+You will output "SUCCESS" if the interviewee's answer is deemed correct and "FAIL" if it's deemed false.
 Below are 5 examples of correct answers.
      
 Here are 5 examples:
@@ -249,8 +249,8 @@ INTERVIEWER:
 What are python modules? Name some commonly used built-in modules in Python?
 
 INTERVIEWEE:
-Python modules are files containing Python code. This code can either be function classes or variables. A Python module is a .py file containing executable code. Some of thecommonly used built-in modules are:
-- Os
+Python modules are files containing Python code. This code can either be function classes or variables. A Python module is a .py file containing executable code. Some of the commonly used built-in modules are:
+- os
 - sys
 - math
 - random
